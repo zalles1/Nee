@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ñee reta Mboriviapegua</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: linear-gradient(135deg, #ecfdf5 0%, #eff6ff 100%); display: flex; flex-direction: column; color: #1e293b; }
+
+        header {
+            background: linear-gradient(135deg, #047857 0%, #0d9488 50%, #0369a1 100%);
+            color: white; padding: 1.5rem 1rem; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        header h1 { font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; }
+        header p  { font-size: 0.85rem; opacity: 0.95; }
+
+        .search-section {
+            background: white; padding: 1rem;
+            position: sticky; top: 0; z-index: 40;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .search-container { max-width: 1200px; margin: 0 auto; display: flex; gap: 0.75rem; }
+        .search-wrapper { flex: 1; position: relative; }
+        .search-wrapper::before { content: "🔍"; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
+        input { width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; border: 2px solid #e2e8f0; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; }
+        input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+
+        .btn-special {
+            padding: 0.75rem 1rem; background: #dcfce7; color: #15803d;
+            border: 2px solid #10b981; border-radius: 0.75rem;
+            font-weight: 900; font-size: 1.3rem; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-special:hover  { background: #10b981; color: white; transform: scale(1.05); }
+        .btn-special:active { transform: scale(0.95); }
+
+        main { flex: 1; overflow-y: auto; padding: 1.5rem 1rem; max-width: 1200px; width: 100%; margin: 0 auto; }
+
+        .initial-message { text-align: center; padding: 3rem 1rem; color: #64748b; }
+        .initial-message-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+
+        .results-info { text-align: center; margin-bottom: 1.5rem; }
+        .results-count { display: inline-block; background: #dcfce7; color: #15803d; padding: 0.5rem 1rem; border-radius: 999px; font-weight: 700; }
+
+        .words-list { display: grid; gap: 0.75rem; }
+
+        .word-item {
+            background: white; border: 2px solid #e2e8f0; border-radius: 1rem;
+            padding: 1.25rem; transition: all 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .word-item:hover    { border-color: #10b981; box-shadow: 0 4px 12px rgba(16,185,129,0.15); transform: translateY(-2px); }
+        .word-item.expanded { border-color: #10b981; background: #f0fdf4; }
+
+        .word-header  { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+        .word-content { flex: 1; min-width: 0; }
+        .word-text    { font-size: 1.5rem; font-weight: 900; color: #065f46; margin-bottom: 0.75rem; word-break: break-word; }
+        .word-meaning { font-size: 1rem; color: #059669; font-weight: 600; line-height: 1.6; }
+
+        .word-buttons { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .btn-icon {
+            width: 2.5rem; height: 2.5rem; border: none; border-radius: 50%;
+            background: #f1f5f9; color: #64748b; cursor: pointer;
+            font-size: 1rem; font-weight: 700; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-icon:hover  { background: #10b981; color: white; }
+        .btn-icon.active { background: #10b981; color: white; transform: rotate(180deg); }
+
+        /* ── Panel desplegable ─────────────────────────────────────── */
+        .word-details {
+            margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #e2e8f0;
+            display: none; flex-direction: column; gap: 0.6rem;
+            font-size: 0.9rem; color: #475569; line-height: 1.7;
+        }
+        .word-details.show { display: flex; animation: slideDown 0.3s ease-out; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .detail-block { display: flex; flex-direction: column; gap: 0.2rem; }
+
+        .detail-label {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.07em; padding: 0.15rem 0.65rem;
+            border-radius: 999px; display: inline-block; width: fit-content;
+        }
+        /* Colores por tipo de etiqueta */
+        .lbl-ejem   { background: #d1fae5; color: #065f46; }
+        .lbl-comp   { background: #dbeafe; color: #1e40af; }
+        .lbl-alt    { background: #ede9fe; color: #5b21b6; }
+        .lbl-etim   { background: #fef9c3; color: #854d0e; }
+        .lbl-fig    { background: #fce7f3; color: #9d174d; }
+        .lbl-etnog  { background: #ffedd5; color: #9a3412; }
+        .lbl-osc    { background: #f1f5f9; color: #475569; }
+        .lbl-farm   { background: #ecfdf5; color: #065f46; }
+        .lbl-bot    { background: #f0fdf4; color: #166534; }
+        .lbl-mit    { background: #fdf4ff; color: #7e22ce; }
+        .lbl-onomat { background: #fffbeb; color: #92400e; }
+        .lbl-topo   { background: #e0f2fe; color: #0c4a6e; }
+        .lbl-cast   { background: #fef2f2; color: #991b1b; }
+
+        .detail-text { font-size: 0.9rem; color: #334155; line-height: 1.65; padding-left: 0.3rem; }
+
+        .empty-state { text-align: center; padding: 3rem 1rem; background: white; border-radius: 1.5rem; border: 2px solid #e2e8f0; }
+        .empty-state-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3; }
+        .empty-state-text { color: #64748b; font-size: 1rem; font-weight: 500; }
+
+        footer { background: white; border-top: 1px solid #e2e8f0; padding: 1rem; text-align: center; font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+
+        @media (max-width: 640px) {
+            header h1 { font-size: 1.5rem; }
+            input { font-size: 0.95rem; }
+            .btn-special { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ñee reta Mboriviapegua</h1>
+        <p>Diccionario Guaraní-Español</p>
+        <p style="font-size: 1.2rem; font-weight: 900; margin-top: 0.5rem;">Diseño, desarrollo web y compilación:<br>Carmen Beatriz Zalles Castellanos</p>
+    </header>
+
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Busca una palabra..." autocomplete="off" />
+            </div>
+            <button class="btn-special" id="btnIGutural">ɨ</button>
+        </div>
+    </section>
+
+    <main id="main">
+        <div class="initial-message">
+            <div class="initial-message-icon">📖</div>
+            <p>Busca una palabra en Guaraní o Español</p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #94a3b8;">16,374 palabras • Diseño, desarrollo web y compilación:<br>Carmen Beatriz Zalles Castellanos</p>
+        </div>
+    </main>
+
+    <footer>Ñee reta Mboriviapegua • Diseño, desarrollo web y compilación:<br>Carmen Beatriz Zalles Castellanos • 2026</footer>
+
+    <script>
+        let data = [];
+        const input = document.getElementById('searchInput');
+        const btn   = document.getElementById('btnIGutural');
+        const main  = document.getElementById('main');
+        let expanded = null;
+
+        fetch('diccionario_procesado.json')
+            .then(r => r.json())
+            .then(d => {
+                data = (d.w || []).sort((a, b) =>
+                    a.w.replace(/^[\s(\-]+/, '').localeCompare(
+                        b.w.replace(/^[\s(\-]+/, ''), 'es', { sensitivity: 'base' }
+                    )
+                );
+                input.focus();
+            })
+            .catch(() => {
+                main.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Error: verifica que diccionario_procesado.json esté en la misma carpeta.</div></div>';
+            });
+
+        /* ── Normalizar ───────────────────────────────────────────── */
+        function norm(t) {
+            if (!t) return '';
+            return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        /* ── Formatear panel desplegable ──────────────────────────── */
+        const LABEL_MAP = {
+            'Ejem:'          : ['Ejem.',      'lbl-ejem'  ],
+            'Comparar:'      : ['Comparar',   'lbl-comp'  ],
+            'Alternativa:'   : ['Alternativa','lbl-alt'   ],
+            'Etim.'          : ['Etim.',       'lbl-etim'  ],
+            'Fig.'           : ['Fig.',        'lbl-fig'   ],
+            'Etnog.'         : ['Etnog.',      'lbl-etnog' ],
+            'Osc.'           : ['Osc.',        'lbl-osc'   ],
+            'Farm.'          : ['Farm.',       'lbl-farm'  ],
+            'Bot.'           : ['Bot.',        'lbl-bot'   ],
+            'Mit.'           : ['Mit.',        'lbl-mit'   ],
+            'Onomat.'        : ['Onomat.',     'lbl-onomat'],
+            'Topónimo.'      : ['Topónimo',    'lbl-topo'  ],
+            'Castellanismo.' : ['Castellanismo','lbl-cast' ],
+        };
+
+        function formatDetails(raw) {
+            if (!raw) return '';
+            /* Separar bloques por ' | ' */
+            const blocks = raw.split(' | ');
+            let html = '';
+            blocks.forEach(block => {
+                block = block.trim().replace(/;$/, '').trim();
+                if (!block) return;
+                let lblKey = null, lblText = '', lblClass = '', text = block;
+                /* Detectar etiqueta al inicio */
+                for (const key of Object.keys(LABEL_MAP)) {
+                    if (block.startsWith(key)) {
+                        lblKey   = key;
+                        lblText  = LABEL_MAP[key][0];
+                        lblClass = LABEL_MAP[key][1];
+                        text = block.slice(key.length).trim().replace(/;$/, '').trim();
+                        break;
+                    }
+                }
+                if (!text) return;
+                html += '<div class="detail-block">';
+                if (lblKey) html += `<span class="detail-label ${lblClass}">${lblText}</span>`;
+                html += `<span class="detail-text">${text}</span>`;
+                html += '</div>';
+            });
+            return html || raw;
+        }
+
+        /* ── Buscar ───────────────────────────────────────────────── */
+        function search() {
+            const q = input.value.trim();
+            if (!q) {
+                main.innerHTML = '<div class="initial-message"><div class="initial-message-icon">📖</div><p>Busca una palabra en Guaraní o Español</p><p style="font-size: 0.85rem; margin-top: 0.5rem; color: #94a3b8;">16,374 palabras • Diseño, desarrollo web y compilación:<br>Carmen Beatriz Zalles Castellanos</p></div>';
+                return;
+            }
+            let ql = q.toLowerCase(), qn = norm(q);
+            const results = data.filter(w => {
+                const wl = w.w.toLowerCase(), wn = norm(w.w);
+                const dl = (w.d || '').toLowerCase(), dn = norm(w.d || '');
+                return wl.startsWith(ql) || wn.startsWith(qn) ||
+                       dl.startsWith(ql) || dn.startsWith(qn) ||
+                       dl.includes(' ' + ql) || dn.includes(' ' + qn);
+            });
+
+            if (!results.length) {
+                main.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No se encontró "${q}"</div></div>`;
+                return;
+            }
+
+            let html = `<div class="results-info"><div class="results-count">📊 ${results.length} resultado${results.length !== 1 ? 's' : ''}</div></div><div class="words-list">`;
+
+            results.forEach(item => {
+                const def      = item.d || item.m || '(sin definición)';
+                const tieneEj  = item.x === 1;
+                html += '<div class="word-item">';
+                html += '<div class="word-header">';
+                html += `<div class="word-content"><div class="word-text">${item.w}</div><div class="word-meaning">${def}</div></div>`;
+                html += '<div class="word-buttons">';
+                if (tieneEj) html += '<button class="btn-icon expand-btn">⬇</button>';
+                html += '</div></div>';
+                if (tieneEj) {
+                    html += `<div class="word-details">${formatDetails(item.e)}</div>`;
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+            main.innerHTML = html;
+            expanded = null;
+
+            document.querySelectorAll('.expand-btn').forEach(b => {
+                b.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const card = this.closest('.word-item');
+                    const det  = card.querySelector('.word-details');
+                    const was  = det.classList.contains('show');
+                    if (expanded && expanded !== card) {
+                        expanded.querySelector('.word-details').classList.remove('show');
+                        expanded.querySelector('.expand-btn').classList.remove('active');
+                        expanded.classList.remove('expanded');
+                    }
+                    det.classList.toggle('show');
+                    this.classList.toggle('active');
+                    card.classList.toggle('expanded');
+                    expanded = was ? null : card;
+                });
+            });
+        }
+
+        /* ── Botón ɨ ──────────────────────────────────────────────── */
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const s = input.selectionStart || 0;
+            const c = input.value;
+            input.value = c.substring(0, s) + 'ɨ' + c.substring(input.selectionEnd || s);
+            input.setSelectionRange(s + 1, s + 1);
+            input.focus();
+            search();
+        });
+
+        input.addEventListener('input', search);
+    </script>
+</body>
+</html>
